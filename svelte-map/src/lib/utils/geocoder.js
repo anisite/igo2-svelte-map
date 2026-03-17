@@ -1,71 +1,91 @@
-/**
- * Geocoding utilities using Nominatim (OpenStreetMap) and coordinate parsing.
- * Inspired by IGO2's icherche + coordinatesreverse search sources.
- */
-
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
+const ICHERCHE_URL = 'https://geoegl.msp.gouv.qc.ca/apis/icherche';
+const TERRAPI_URL = 'https://geoegl.msp.gouv.qc.ca/apis/terrapi';
 
 /**
- * Search for addresses/places using Nominatim.
+ * Search for addresses/places using ICherche (Adresses Québec).
+ * API returns GeoJSON FeatureCollection.
+ * geometry=true is required to get coordinates in the response.
  */
 export async function searchAddress(query, options = {}) {
   const params = new URLSearchParams({
     q: query,
-    format: 'json',
-    addressdetails: '1',
     limit: options.limit || '10',
-    'accept-language': options.lang || 'fr',
-    countrycodes: options.countries || ''
+    type: options.type || 'adresses,lieux,municipalites,mrc,regadmin',
+    geometry: 'true',
+    bbox: 'true'
   });
 
-  const response = await fetch(`${NOMINATIM_URL}?${params}`, {
-    headers: { 'User-Agent': 'IGO2-Svelte-Map/1.0' }
-  });
+  const response = await fetch(`${ICHERCHE_URL}/geocode?${params}`);
 
   if (!response.ok) throw new Error('Search failed');
 
-  const results = await response.json();
-  return results.map((r) => ({
-    id: r.place_id,
-    name: r.display_name,
-    type: r.type,
-    category: r.category,
-    lon: parseFloat(r.lon),
-    lat: parseFloat(r.lat),
-    bbox: r.boundingbox
-      ? [
-          parseFloat(r.boundingbox[2]),
-          parseFloat(r.boundingbox[0]),
-          parseFloat(r.boundingbox[3]),
-          parseFloat(r.boundingbox[1])
-        ]
-      : null
-  }));
+  const data = await response.json();
+  const features = data.features || [];
+
+  return features
+    .map((f) => {
+      const props = f.properties || {};
+      const geom = f.geometry;
+      const coords = geom?.coordinates;
+
+      // Skip features without geometry (no coordinates to show on map)
+      if (!coords || coords.length < 2) return null;
+
+      // ICherche returns [lon, lat] in EPSG:4326
+      const lon = coords[0];
+      const lat = coords[1];
+      const bbox = f.bbox;
+
+      // Build display name: nom + municipalite context
+      let name = props.nom;
+      if (props.municipalite && !name?.includes(props.municipalite)) {
+        name = `${name}, ${props.municipalite}`;
+      }
+
+      return {
+        id: props.code,
+        name,
+        type: props.typeEntite || f.index,
+        category: f.index,
+        lon,
+        lat,
+        bbox: bbox
+          ? [
+              parseFloat(bbox[0]),
+              parseFloat(bbox[1]),
+              parseFloat(bbox[2]),
+              parseFloat(bbox[3])
+            ]
+          : null
+      };
+    })
+    .filter(Boolean);
 }
 
 /**
- * Reverse geocode coordinates.
+ * Reverse geocode coordinates using TerrAPI.
  */
 export async function reverseGeocode(lon, lat) {
   const params = new URLSearchParams({
-    lon: String(lon),
-    lat: String(lat),
-    format: 'json',
-    addressdetails: '1',
-    'accept-language': 'fr'
+    loc: `${lon},${lat}`,
+    limit: '1'
   });
 
-  const response = await fetch(`${NOMINATIM_REVERSE_URL}?${params}`, {
-    headers: { 'User-Agent': 'IGO2-Svelte-Map/1.0' }
-  });
+  const response = await fetch(`${TERRAPI_URL}/locate?${params}`);
 
   if (!response.ok) return null;
-  const result = await response.json();
+  const data = await response.json();
+  const features = data.features || [];
+  if (features.length === 0) return null;
+
+  const f = features[0];
+  const props = f.properties || {};
+  const coords = f.geometry?.coordinates || [lon, lat];
+
   return {
-    name: result.display_name,
-    lon: parseFloat(result.lon),
-    lat: parseFloat(result.lat)
+    name: props.nom || props.title || `${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}`,
+    lon: coords[0],
+    lat: coords[1]
   };
 }
 
