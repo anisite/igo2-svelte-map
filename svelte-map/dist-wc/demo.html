@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Démo — IGO2 Map Web Component</title>
+
+  <!-- Styles du web component -->
+  <link rel="stylesheet" href="igo2-map.css" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F1F1F2;
+      color: #223654;
+      min-height: 100vh;
+    }
+
+    /* ── Bandeau gouvernemental ─────────────────────────────────────────── */
+    .gouv-banner {
+      background: #223654;
+      color: white;
+      font-size: 12px;
+      padding: 6px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gouv-banner svg { flex-shrink: 0; }
+
+    /* ── En-tête de page ────────────────────────────────────────────────── */
+    .page-header {
+      background: white;
+      border-bottom: 1px solid #C5CAD2;
+      padding: 20px 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #223654;
+      line-height: 1.2;
+    }
+
+    .page-header p {
+      font-size: 14px;
+      color: #8893A2;
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: #DAE6F0;
+      color: #095797;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Démo principale ────────────────────────────────────────────────── */
+    .demo-section {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .demo-section h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #095797;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Carte plein écran */
+    .map-full {
+      width: 100%;
+      height: 600px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(34, 54, 84, 0.12);
+      border: 1px solid #C5CAD2;
+    }
+
+    /* ── Section code ───────────────────────────────────────────────────── */
+    .code-section {
+      padding: 0 24px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .code-card {
+      background: white;
+      border: 1px solid #C5CAD2;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .code-card-header {
+      background: #095797;
+      color: white;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .code-card pre {
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: #223654;
+      background: #F8F9FA;
+      margin: 0;
+    }
+
+    .code-card code {
+      font-family: 'Courier New', Consolas, monospace;
+    }
+
+    .token-tag    { color: #095797; }
+    .token-attr   { color: #19406C; }
+    .token-string { color: #4F813D; }
+    .token-comment{ color: #8893A2; font-style: italic; }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      background: #223654;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      padding: 16px 24px;
+      text-align: center;
+    }
+
+    footer a { color: #4A98D9; }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .demo-section, .code-section { padding: 16px; }
+      .map-full { height: 70vh; }
+      .code-section { grid-template-columns: 1fr; }
+      .page-header { padding: 16px; }
+      .page-header h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Bandeau gouvernemental optionnel -->
+  <div class="gouv-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    Gouvernement du Québec — Infrastructure Géomatique Ouverte
+  </div>
+
+  <!-- En-tête de page -->
+  <header class="page-header">
+    <div>
+      <h1>IGO2 — Carte interactive</h1>
+      <p>Composant web réutilisable basé sur OpenLayers &amp; Svelte</p>
+    </div>
+    <span class="badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      Web Component
+    </span>
+  </header>
+
+  <!-- Démo de la carte -->
+  <main>
+    <section class="demo-section" aria-label="Carte interactive">
+      <h2>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/>
+        </svg>
+        Carte interactive
+      </h2>
+
+      <!-- ↓↓↓  LE WEB COMPONENT  ↓↓↓ -->
+      <igo2-map class="map-full"></igo2-map>
+    </section>
+
+    <!-- Instructions d'intégration -->
+    <section class="code-section" aria-label="Instructions d'intégration">
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Intégration minimale
+        </div>
+        <pre><code><span class="token-comment">&lt;!-- 1. Charger les styles --&gt;</span>
+<span class="token-tag">&lt;link</span> <span class="token-attr">rel</span>=<span class="token-string">"stylesheet"</span>
+      <span class="token-attr">href</span>=<span class="token-string">"igo2-map.css"</span><span class="token-tag">&gt;</span>
+
+<span class="token-comment">&lt;!-- 2. Placer le composant --&gt;</span>
+<span class="token-tag">&lt;igo2-map</span>
+  <span class="token-attr">style</span>=<span class="token-string">"display:block;
+         width:100%;
+         height:600px;"</span><span class="token-tag">&gt;
+&lt;/igo2-map&gt;</span>
+
+<span class="token-comment">&lt;!-- 3. Charger le script (en bas) --&gt;</span>
+<span class="token-tag">&lt;script</span> <span class="token-attr">src</span>=<span class="token-string">"igo2-map.iife.js"</span><span class="token-tag">&gt;&lt;/script&gt;</span></code></pre>
+      </div>
+
+      <div class="code-card">
+        <div class="code-card-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Intégration dans une grille
+        </div>
+        <pre><code><span class="token-comment">&lt;!-- Plein écran --&gt;</span>
+<span class="token-tag">&lt;igo2-map</span>
+  <span class="token-attr">style</span>=<span class="token-string">"width:100vw;
+         height:100vh;"</span><span class="token-tag">&gt;&lt;/igo2-map&gt;</span>
+
+<span class="token-comment">&lt;!-- Dans un conteneur --&gt;</span>
+<span class="token-tag">&lt;div</span> <span class="token-attr">style</span>=<span class="token-string">"height:500px"</span><span class="token-tag">&gt;</span>
+  <span class="token-tag">&lt;igo2-map</span>
+    <span class="token-attr">style</span>=<span class="token-string">"width:100%;
+           height:100%;"</span><span class="token-tag">&gt;
+  &lt;/igo2-map&gt;</span>
+<span class="token-tag">&lt;/div&gt;</span>
+
+<span class="token-comment">&lt;!-- Dans un CMS (WordPress, etc.) --&gt;</span>
+<span class="token-tag">&lt;igo2-map</span>
+  <span class="token-attr">class</span>=<span class="token-string">"wp-block-embed"</span>
+  <span class="token-attr">style</span>=<span class="token-string">"height:450px;"</span><span class="token-tag">&gt;
+&lt;/igo2-map&gt;</span></code></pre>
+      </div>
+
+    </section>
+  </main>
+
+  <footer>
+    IGO2 Svelte Map — <a href="https://www.quebec.ca/gouvernement/politiques-orientations/vitrine-numeriqc/numeriqc" target="_blank" rel="noopener">NUMÉRIQc</a> —
+    Propulsé par <a href="https://openlayers.org/" target="_blank" rel="noopener">OpenLayers</a> &amp;
+    <a href="https://svelte.dev/" target="_blank" rel="noopener">Svelte</a>
+  </footer>
+
+  <!-- ↓ Le script doit être chargé APRÈS le HTML ↓ -->
+  <script src="igo2-map.iife.js"></script>
+
+</body>
+</html>
