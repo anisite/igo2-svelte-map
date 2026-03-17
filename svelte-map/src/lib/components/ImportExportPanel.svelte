@@ -10,15 +10,16 @@
 
   let fileInput;
   let exportFormat = 'geojson';
+  let dragOver = false;
 
   const importStyle = new Style({
     image: new CircleStyle({
       radius: 6,
-      fill: new Fill({ color: 'rgba(46, 204, 113, 0.8)' }),
-      stroke: new Stroke({ color: '#27ae60', width: 2 })
+      fill: new Fill({ color: 'rgba(79, 129, 61, 0.8)' }),
+      stroke: new Stroke({ color: '#4F813D', width: 2 })
     }),
-    fill: new Fill({ color: 'rgba(46, 204, 113, 0.2)' }),
-    stroke: new Stroke({ color: '#27ae60', width: 2 })
+    fill: new Fill({ color: 'rgba(79, 129, 61, 0.2)' }),
+    stroke: new Stroke({ color: '#4F813D', width: 2 })
   });
 
   async function handleFileImport(e) {
@@ -33,14 +34,7 @@
 
         overlayLayers.update((layers) => [
           ...layers,
-          {
-            id: `import_${Date.now()}`,
-            name: file.name,
-            visible: true,
-            opacity: 1,
-            source: 'import',
-            olLayer: layer
-          }
+          { id: `import_${Date.now()}`, name: file.name, visible: true, opacity: 1, source: 'import', olLayer: layer }
         ]);
 
         notify(`"${file.name}" importé (${features.length} entités)`, 'success');
@@ -50,6 +44,12 @@
     }
 
     fileInput.value = '';
+  }
+
+  function handleDrop(e) {
+    dragOver = false;
+    const dt = e.dataTransfer;
+    if (dt.files.length) handleFileImport({ target: { files: dt.files } });
   }
 
   function handleExport() {
@@ -63,8 +63,14 @@
   <p class="hint">Formats supportés : GeoJSON, KML</p>
 
   <button class="import-btn" on:click={() => fileInput.click()}>
-    Choisir un fichier...
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Choisir un fichier…
   </button>
+
   <input
     bind:this={fileInput}
     type="file"
@@ -72,44 +78,66 @@
     multiple
     on:change={handleFileImport}
     hidden
+    aria-hidden="true"
   />
 
-  <div class="drop-zone" on:dragover|preventDefault on:drop|preventDefault={(e) => {
-    const dt = e.dataTransfer;
-    if (dt.files.length) {
-      handleFileImport({ target: { files: dt.files } });
-    }
-  }}>
-    Glisser-déposer des fichiers ici
+  <div
+    class="drop-zone"
+    class:drag-over={dragOver}
+    role="button"
+    tabindex="0"
+    aria-label="Zone de glisser-déposer pour importer des fichiers"
+    on:dragover|preventDefault={() => (dragOver = true)}
+    on:dragleave={() => (dragOver = false)}
+    on:drop|preventDefault={handleDrop}
+    on:keydown={(e) => e.key === 'Enter' && fileInput.click()}
+    on:click={() => fileInput.click()}
+  >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <span>Glisser-déposer des fichiers ici</span>
   </div>
+
+  <div class="sep"></div>
 
   <h3>Exporter</h3>
 
-  <div class="export-options">
-    <label>
+  <div class="export-options" role="radiogroup" aria-label="Format d'export">
+    <label class="radio-option" class:selected={exportFormat === 'geojson'}>
       <input type="radio" value="geojson" bind:group={exportFormat} />
       GeoJSON
     </label>
-    <label>
+    <label class="radio-option" class:selected={exportFormat === 'kml'}>
       <input type="radio" value="kml" bind:group={exportFormat} />
       KML
     </label>
   </div>
 
   <button class="export-btn" on:click={handleExport}>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
     Exporter les couches visibles
   </button>
 </div>
 
 <style>
   .import-export-panel {
-    padding: 12px;
+    padding: 16px;
   }
 
   h3 {
-    margin: 16px 0 8px;
-    font-size: 14px;
-    color: #e0e0ff;
+    margin: 20px 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--qc-blue-dark);
+    border-bottom: 2px solid var(--qc-blue-piv);
+    padding-bottom: 8px;
   }
 
   h3:first-child {
@@ -117,77 +145,125 @@
   }
 
   .hint {
-    font-size: 11px;
-    color: #888;
-    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--qc-gray);
+    margin: 0 0 10px;
   }
 
   .import-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
-    padding: 10px;
-    background: rgba(46, 204, 113, 0.1);
-    border: 1px solid rgba(46, 204, 113, 0.3);
+    padding: 11px;
+    background: var(--qc-white);
+    border: 1px solid var(--qc-blue-clear);
     border-radius: 6px;
-    color: #2ecc71;
+    color: var(--qc-blue);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 600;
     transition: all 0.15s;
+    min-height: 44px;
   }
 
   .import-btn:hover {
-    background: rgba(46, 204, 113, 0.2);
+    background: var(--qc-blue-light);
+    border-color: var(--qc-blue);
   }
 
   .drop-zone {
-    margin-top: 8px;
-    padding: 24px 12px;
-    border: 2px dashed #444;
+    margin-top: 10px;
+    padding: 24px 16px;
+    border: 2px dashed var(--qc-gray-light);
     border-radius: 8px;
     text-align: center;
-    font-size: 12px;
-    color: #666;
+    font-size: 13px;
+    color: var(--qc-gray);
     transition: all 0.2s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 
-  .drop-zone:hover {
-    border-color: #2ecc71;
-    color: #2ecc71;
-    background: rgba(46, 204, 113, 0.05);
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: var(--qc-blue);
+    color: var(--qc-blue);
+    background: var(--qc-blue-light);
+  }
+
+  .sep {
+    height: 1px;
+    background: var(--qc-gray-light);
+    margin: 16px 0 4px;
   }
 
   .export-options {
     display: flex;
-    gap: 16px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
 
-  .export-options label {
+  .radio-option {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #ccc;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--qc-gray-light);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--qc-blue-dark);
     cursor: pointer;
+    transition: all 0.15s;
+    min-height: 44px;
+    background: var(--qc-white);
   }
 
-  .export-options input {
-    accent-color: #00a1de;
+  .radio-option:hover {
+    background: var(--qc-blue-light);
+    border-color: var(--qc-blue-clear);
+  }
+
+  .radio-option.selected {
+    background: var(--qc-blue-light);
+    border-color: var(--qc-blue-piv);
+    color: var(--qc-blue-piv);
+  }
+
+  .radio-option input {
+    accent-color: var(--qc-blue-piv);
+    width: 16px;
+    height: 16px;
   }
 
   .export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
-    padding: 10px;
-    background: #00a1de;
+    padding: 11px;
+    background: var(--qc-blue-piv);
     border: none;
     border-radius: 6px;
     color: white;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 700;
     transition: background 0.15s;
+    min-height: 44px;
   }
 
   .export-btn:hover {
-    background: #0086b8;
+    background: var(--qc-blue);
   }
 </style>

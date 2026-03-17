@@ -4,7 +4,7 @@ import { writable, derived } from 'svelte/store';
 export const activeTool = writable(null);
 
 /** Currently active base layer ID */
-export const activeBaseLayer = writable('osm');
+export const activeBaseLayer = writable('gouvqc');
 
 /** User-added overlay layers: [{ id, name, visible, opacity, source, olLayer }] */
 export const overlayLayers = writable([]);

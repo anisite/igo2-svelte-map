@@ -60,6 +60,15 @@
 
   const baseLayerDefs = {
     osm: { name: 'OpenStreetMap', create: () => new TileLayer({ source: new OSM() }) },
+    gouvqc: {
+      name: 'GouvQc',
+      create: () => new TileLayer({
+        source: new XYZ({
+          url: 'https://geoegl.msp.gouv.qc.ca/carto/tms/1.0.0/carte_gouv_qc_public@EPSG_3857/{z}/{x}/{-y}.png',
+          attributions: '© Gouvernement du Québec'
+        })
+      })
+    },
     osmHot: {
       name: 'OSM Humanitaire',
       create: () => new TileLayer({
@@ -135,7 +144,7 @@
     for (const [id, def] of Object.entries(baseLayerDefs)) {
       baseLayers[id] = def.create();
       baseLayers[id].set('id', id);
-      baseLayers[id].setVisible(id === 'osm');
+      baseLayers[id].setVisible(id === 'gouvqc');
     }
 
     // Search results layer
